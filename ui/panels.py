@@ -1,56 +1,29 @@
 import pygame
 
+from config import (
+    SHOW_COMPARE_TABLE_HINT,
+    SHOW_PANEL_COMPARISON,
+    SHOW_PANEL_EMPTY_HINT,
+    SHOW_PANEL_EXPLANATIONS,
+    SHOW_PANEL_TITLE,
+)
+from ui.texts import ALGORITHM_ORDER, ALGO_EXPLANATIONS, COMPARE_TABLE_TEXT, STATS_PANEL_TEXT
 from ui.theme import ALGO_COLORS, C_PANEL_BG, C_PANEL_BORDER, C_TEXT_ACCENT, C_TEXT_PRIMARY, C_TEXT_SECONDARY
 
 
 class StatsPanel:
-    EXPLANATIONS = {
-        "DFS": [
-            "DFS – Depth First Search",
-            "─" * 26,
-            "• Đi sâu nhất có thể theo",
-            "  một hướng trước.",
-            "• Dùng STACK (vào sau ra trước).",
-            "• Không đảm bảo đường ngắn nhất.",
-            "• Tốt khi maze rất sâu hoặc",
-            "  khi chỉ cần tìm 1 đường.",
-        ],
-        "BFS": [
-            "BFS – Breadth First Search",
-            "─" * 26,
-            "• Khám phá tất cả node cùng",
-            "  khoảng cách trước.",
-            "• Dùng QUEUE (vào trước ra trước).",
-            "• ĐẢM BẢO đường ngắn nhất",
-            "  (đếm theo số bước).",
-            "• Tốn nhiều RAM hơn DFS.",
-        ],
-        "A*": [
-            "A* – A-Star Search",
-            "─" * 26,
-            "• Kết hợp BFS + Heuristic.",
-            "• f(n)=g(n)+h(n)",
-            "  g: chi phí đã đi thực tế",
-            "  h: ước lượng Manhattan đến goal",
-            "• Ưu tiên node 'có vẻ gần goal'.",
-            "• Nhanh nhất & tối ưu nhất.",
-        ],
-    }
-
     def __init__(self, x: int, y: int, w: int, h: int, font_sm, font_md, font_lg):
         self.rect = pygame.Rect(x, y, w, h)
         self.font_sm = font_sm
         self.font_md = font_md
         self.font_lg = font_lg
         self.results: dict = {}
-        self.scroll_y: int = 0
 
     def add_result(self, algo_name: str, stats: dict):
         self.results[algo_name] = stats
 
     def clear(self):
         self.results = {}
-        self.scroll_y = 0
 
     def draw(self, surface: pygame.Surface):
         panel_surf = pygame.Surface((self.rect.w, self.rect.h), pygame.SRCALPHA)
@@ -63,17 +36,19 @@ class StatsPanel:
         x = self.rect.x + 14
         w = self.rect.w - 28
 
-        title = self.font_md.render("📊 Kết quả & Phân tích", True, C_TEXT_ACCENT)
-        surface.blit(title, (x, y))
-        y += title.get_height() + 6
+        if SHOW_PANEL_TITLE:
+            title = self.font_md.render(STATS_PANEL_TEXT["title"], True, C_TEXT_ACCENT)
+            surface.blit(title, (x, y))
+            y += title.get_height() + 6
 
-        pygame.draw.line(surface, C_PANEL_BORDER, (x, y), (x + w, y))
-        y += 10
+            pygame.draw.line(surface, C_PANEL_BORDER, (x, y), (x + w, y))
+            y += 10
 
         if not self.results:
-            hint = self.font_sm.render("Chọn thuật toán và nhấn nút để chạy.", True, C_TEXT_SECONDARY)
-            surface.blit(hint, (x, y))
-            y += 30
+            if SHOW_PANEL_EMPTY_HINT:
+                hint = self.font_sm.render(STATS_PANEL_TEXT["empty_hint"], True, C_TEXT_SECONDARY)
+                surface.blit(hint, (x, y))
+                y += 30
 
             for algo, info in ALGO_COLORS.items():
                 pygame.draw.rect(surface, info["path"], (x, y + 3, 14, 14), border_radius=3)
@@ -83,8 +58,7 @@ class StatsPanel:
 
             return
 
-        order = ["DFS", "BFS", "A*"]
-        for algo in order:
+        for algo in ALGORITHM_ORDER:
             if algo not in self.results:
                 continue
 
@@ -97,9 +71,14 @@ class StatsPanel:
             y += 24
 
             rows_data = [
-                ("Path length", f"{stats['path_length']} bước" if stats["path_length"] else "Không tìm được"),
-                ("Nodes explored", f"{stats['nodes_explored']}"),
-                ("Time", f"{stats['time_ms']:.3f} ms"),
+                (
+                    STATS_PANEL_TEXT["path_length"],
+                    f"{stats['path_length']} {STATS_PANEL_TEXT['steps_suffix']}"
+                    if stats["path_length"]
+                    else STATS_PANEL_TEXT["not_found"],
+                ),
+                (STATS_PANEL_TEXT["nodes_explored"], f"{stats['nodes_explored']}"),
+                (STATS_PANEL_TEXT["time"], f"{stats['time_ms']:.3f} ms"),
             ]
 
             for label, val in rows_data:
@@ -111,11 +90,11 @@ class StatsPanel:
 
             y += 6
 
-        if len(self.results) >= 2:
+        if SHOW_PANEL_COMPARISON and len(self.results) >= 2:
             pygame.draw.line(surface, C_PANEL_BORDER, (x, y), (x + w, y))
             y += 8
 
-            cmp_txt = self.font_sm.render("🏆 So sánh", True, C_TEXT_ACCENT)
+            cmp_txt = self.font_sm.render(STATS_PANEL_TEXT["comparison_title"], True, C_TEXT_ACCENT)
             surface.blit(cmp_txt, (x, y))
             y += 20
 
@@ -126,9 +105,9 @@ class StatsPanel:
                 efficient = min(valid, key=lambda a: valid[a]["nodes_explored"])
 
                 lines = [
-                    ("⚡ Nhanh nhất", fastest, ALGO_COLORS[fastest]["path"]),
-                    ("📏 Đường ngắn", shortest, ALGO_COLORS[shortest]["path"]),
-                    ("🧠 Ít node nhất", efficient, ALGO_COLORS[efficient]["path"]),
+                    (STATS_PANEL_TEXT["fastest"], fastest, ALGO_COLORS[fastest]["path"]),
+                    (STATS_PANEL_TEXT["shortest"], shortest, ALGO_COLORS[shortest]["path"]),
+                    (STATS_PANEL_TEXT["efficient"], efficient, ALGO_COLORS[efficient]["path"]),
                 ]
 
                 for label, winner, col in lines:
@@ -140,33 +119,34 @@ class StatsPanel:
 
                 y += 8
 
-        pygame.draw.line(surface, C_PANEL_BORDER, (x, y), (x + w, y))
-        y += 8
-
-        ex_hdr = self.font_sm.render("💡 Giải thích thuật toán", True, C_TEXT_ACCENT)
-        surface.blit(ex_hdr, (x, y))
-        y += 20
-
-        for algo in order:
-            if algo not in self.results:
-                continue
-
-            color = ALGO_COLORS[algo]["path"]
-
-            for line in self.EXPLANATIONS[algo]:
-                if y > self.rect.bottom - 20:
-                    break
-
-                if line.startswith("─"):
-                    pygame.draw.line(surface, (*color, 120), (x, y + 6), (x + w, y + 6))
-                    y += 14
-                else:
-                    style_col = color if not line.startswith("•") else C_TEXT_PRIMARY
-                    txt_surf = self.font_sm.render(line, True, style_col)
-                    surface.blit(txt_surf, (x, y))
-                    y += 16
-
+        if SHOW_PANEL_EXPLANATIONS:
+            pygame.draw.line(surface, C_PANEL_BORDER, (x, y), (x + w, y))
             y += 8
+
+            ex_hdr = self.font_sm.render(STATS_PANEL_TEXT["explanations_title"], True, C_TEXT_ACCENT)
+            surface.blit(ex_hdr, (x, y))
+            y += 20
+
+            for algo in ALGORITHM_ORDER:
+                if algo not in self.results:
+                    continue
+
+                color = ALGO_COLORS[algo]["path"]
+
+                for line in ALGO_EXPLANATIONS[algo]:
+                    if y > self.rect.bottom - 20:
+                        break
+
+                    if line.startswith("─"):
+                        pygame.draw.line(surface, (*color, 120), (x, y + 6), (x + w, y + 6))
+                        y += 14
+                    else:
+                        style_col = color if not line.startswith("•") else C_TEXT_PRIMARY
+                        txt_surf = self.font_sm.render(line, True, style_col)
+                        surface.blit(txt_surf, (x, y))
+                        y += 16
+
+                y += 8
 
 
 class CompareTable:
@@ -214,16 +194,15 @@ class CompareTable:
         sy += 22
 
         if not values:
-            na = self.font_sm.render("(Chưa có dữ liệu)", True, C_TEXT_SECONDARY)
+            na = self.font_sm.render(COMPARE_TABLE_TEXT["no_data"], True, C_TEXT_SECONDARY)
             surface.blit(na, (sx, sy))
             return sy + 18
 
         max_val = max(values.values()) or 1
         bar_h = 20
         gap = 10
-        algos = ["DFS", "BFS", "A*"]
 
-        for algo in algos:
+        for algo in ALGORITHM_ORDER:
             if algo not in values:
                 continue
 
@@ -258,35 +237,38 @@ class CompareTable:
         pop_surf = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
         pop_surf.fill((*C_PANEL_BG, 250))
         surface.blit(pop_surf, (self.x, self.y))
+
         pygame.draw.rect(surface, C_TEXT_ACCENT, self.rect, 2, border_radius=12)
 
         px, py = self.x + 24, self.y + 18
         pw = self.w - 48
 
-        title = self.font_lg.render("📊 Bảng So Sánh Thuật Toán", True, C_TEXT_ACCENT)
+        title = self.font_lg.render(COMPARE_TABLE_TEXT["title"], True, C_TEXT_ACCENT)
         surface.blit(title, (px, py))
         py += title.get_height() + 4
 
-        hint = self.font_xs.render("Nhấn ESC hoặc click bên ngoài để đóng", True, C_TEXT_SECONDARY)
-        surface.blit(hint, (px, py))
-        py += hint.get_height() + 10
+        if SHOW_COMPARE_TABLE_HINT:
+            hint = self.font_xs.render(COMPARE_TABLE_TEXT["close_hint"], True, C_TEXT_SECONDARY)
+            surface.blit(hint, (px, py))
+            py += hint.get_height() + 10
+        else:
+            py += 10
 
         pygame.draw.line(surface, C_PANEL_BORDER, (px, py), (px + pw, py))
         py += 12
 
         if not self.results:
-            msg = self.font_md.render("Chưa có kết quả. Hãy chạy ít nhất 1 thuật toán!", True, C_TEXT_SECONDARY)
+            msg = self.font_md.render(COMPARE_TABLE_TEXT["empty"], True, C_TEXT_SECONDARY)
             surface.blit(msg, (px, py))
             return
 
         col_widths = [70, 110, 130, 120]
-        headers = ["Thuật toán", "Path length", "Nodes explored", "Time (ms)"]
+        headers = COMPARE_TABLE_TEXT["headers"]
         row_h = 24
-        algos = ["DFS", "BFS", "A*"]
 
         cx = px
-        for i, h in enumerate(headers):
-            hs = self.font_sm.render(h, True, C_TEXT_SECONDARY)
+        for i, header in enumerate(headers):
+            hs = self.font_sm.render(header, True, C_TEXT_SECONDARY)
             surface.blit(hs, (cx, py))
             cx += col_widths[i]
 
@@ -294,7 +276,7 @@ class CompareTable:
         pygame.draw.line(surface, C_PANEL_BORDER, (px, py - 4), (px + pw, py - 4))
 
         valid = {}
-        for algo in algos:
+        for algo in ALGORITHM_ORDER:
             if algo not in self.results:
                 continue
 
@@ -306,7 +288,9 @@ class CompareTable:
             cx = px
             cells = [
                 algo,
-                f"{s['path_length']} bước" if s["path_length"] else "N/A",
+                f"{s['path_length']} {COMPARE_TABLE_TEXT['steps_suffix']}"
+                if s["path_length"]
+                else COMPARE_TABLE_TEXT["not_available"],
                 str(s["nodes_explored"]),
                 f"{s['time_ms']:.4f}",
             ]
@@ -326,9 +310,9 @@ class CompareTable:
             py += 8
 
             winners = [
-                ("⚡ Nhanh nhất", min(valid, key=lambda a: valid[a]["time_ms"])),
-                ("📏 Đường ngắn", min(valid, key=lambda a: valid[a]["path_length"])),
-                ("🧠 Ít node nhất", min(valid, key=lambda a: valid[a]["nodes_explored"])),
+                (COMPARE_TABLE_TEXT["fastest"], min(valid, key=lambda a: valid[a]["time_ms"])),
+                (COMPARE_TABLE_TEXT["shortest"], min(valid, key=lambda a: valid[a]["path_length"])),
+                (COMPARE_TABLE_TEXT["efficient"], min(valid, key=lambda a: valid[a]["nodes_explored"])),
             ]
 
             wx = px
@@ -353,7 +337,7 @@ class CompareTable:
             px,
             py,
             half_w,
-            "📏 Path Length (bước)",
+            COMPARE_TABLE_TEXT["path_section"],
             path_vals,
             lambda v: str(v),
             "path",
@@ -365,7 +349,7 @@ class CompareTable:
             px + half_w + 20,
             py,
             half_w,
-            "🔍 Nodes Explored",
+            COMPARE_TABLE_TEXT["node_section"],
             node_vals,
             lambda v: str(v),
             "visit",
@@ -380,7 +364,7 @@ class CompareTable:
                 px,
                 py,
                 pw,
-                "⏱ Time (ms)",
+                COMPARE_TABLE_TEXT["time_section"],
                 time_vals,
                 lambda v: f"{v:.4f}ms",
                 "path",

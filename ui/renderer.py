@@ -1,6 +1,20 @@
 import pygame
 
-from ui.theme import ALGO_COLORS, C_ASTAR_PATH, C_BFS_PATH, C_DFS_PATH, C_GOAL, C_PANEL_BG, C_PASSAGE, C_START, C_TEXT_ACCENT, C_TEXT_SECONDARY, C_WALL
+from config import SHOW_LEGEND, SHOW_STATUS_BAR
+from ui.texts import LEGEND_ITEMS
+from ui.theme import (
+    C_ASTAR_PATH,
+    C_BFS_PATH,
+    C_DFS_PATH,
+    C_GOAL,
+    C_PANEL_BG,
+    C_PASSAGE,
+    C_START,
+    C_TEXT_ACCENT,
+    C_TEXT_SECONDARY,
+    C_WALL,
+    ALGO_COLORS,
+)
 
 
 class MazeRenderer:
@@ -101,6 +115,9 @@ class MazeRenderer:
         )
 
     def draw_status_bar(self, status_msg: str):
+        if not SHOW_STATUS_BAR:
+            return
+
         bar_y = self.rows * self.cell_size + self.maze_y_offset + 4
         bar_r = pygame.Rect(self.maze_x_offset, bar_y, self.cols * self.cell_size, 22)
         bar_s = pygame.Surface((bar_r.w, bar_r.h), pygame.SRCALPHA)
@@ -111,18 +128,22 @@ class MazeRenderer:
         self.screen.blit(msg, (bar_r.x + 8, bar_r.y + 3))
 
     def draw_legend(self):
-        items = [
-            ("Start", C_START),
-            ("Goal", C_GOAL),
-            ("DFS path", C_DFS_PATH),
-            ("BFS path", C_BFS_PATH),
-            ("A* path", C_ASTAR_PATH),
-        ]
+        if not SHOW_LEGEND:
+            return
+
+        color_map = {
+            "start": C_START,
+            "goal": C_GOAL,
+            "dfs_path": C_DFS_PATH,
+            "bfs_path": C_BFS_PATH,
+            "astar_path": C_ASTAR_PATH,
+        }
 
         lx = self.maze_x_offset
         ly = self.maze_y_offset - 22
 
-        for label, col in items:
+        for label, color_key in LEGEND_ITEMS:
+            col = color_map[color_key]
             pygame.draw.rect(self.screen, col, (lx, ly + 2, 12, 12), border_radius=2)
             txt = self.font_xs.render(label, True, C_TEXT_SECONDARY)
             self.screen.blit(txt, (lx + 16, ly))
