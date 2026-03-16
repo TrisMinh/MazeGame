@@ -11,6 +11,7 @@ class MazeGenerator:
         self._carve_iterative(1, 1)
         self.grid[1][1] = 1
         self.grid[self.rows - 2][self.cols - 2] = 1
+        self._break_one_wall_for_second_path()
         return self.grid
 
     def _carve_iterative(self, start_r: int, start_c: int):
@@ -35,3 +36,20 @@ class MazeGenerator:
                 frontier.append((nr, nc))
             else:
                 frontier.pop()
+
+    def _break_one_wall_for_second_path(self):
+        candidates = []
+
+        for r in range(1, self.rows - 1):
+            for c in range(1, self.cols - 1):
+                if self.grid[r][c] != 0:
+                    continue
+
+                if self.grid[r][c - 1] == 1 and self.grid[r][c + 1] == 1:
+                    candidates.append((r, c))
+                elif self.grid[r - 1][c] == 1 and self.grid[r + 1][c] == 1:
+                    candidates.append((r, c))
+
+        if candidates:
+            r, c = random.choice(candidates)
+            self.grid[r][c] = 1
