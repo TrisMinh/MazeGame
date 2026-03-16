@@ -12,12 +12,12 @@ BUTTON_LABELS = {
 }
 
 BUTTON_ICONS = {
-    "DFS": "🔵",
-    "BFS": "🔷",
-    "A*": "⭐",
-    "COMPARE": "📊",
-    "RESET": "🔄",
-    "TABLE": "📋",
+    "DFS": "",
+    "BFS": "",
+    "A*": "",
+    "COMPARE": "",
+    "RESET": "",
+    "TABLE": "",
 }
 
 STATUS_MESSAGES = {
@@ -88,16 +88,16 @@ ALGO_EXPLANATIONS = {
 }
 
 COMPARE_TABLE_TEXT = {
-    "title": "📊 Bảng So Sánh Thuật Toán",
+    "title": "Bảng So Sánh Thuật Toán",
     "close_hint": "Nhấn ESC hoặc click bên ngoài để đóng",
     "empty": "Chưa có kết quả. Hãy chạy ít nhất 1 thuật toán!",
     "headers": ["Thuật toán", "Path length", "Nodes explored", "Time (ms)"],
-    "path_section": "📏 Path Length (bước)",
-    "node_section": "🔍 Nodes Explored",
-    "time_section": "⏱ Time (ms)",
-    "fastest": "⚡ Nhanh nhất",
-    "shortest": "📏 Đường ngắn",
-    "efficient": "🧠 Ít node nhất",
+    "path_section": "Path Length (bước)",
+    "node_section": "Nodes Explored",
+    "time_section": "Time (ms)",
+    "fastest": "Nhanh nhất",
+    "shortest": "Đường ngắn",
+    "efficient": "Ít node nhất",
     "steps_suffix": "bước",
     "not_available": "N/A",
     "no_data": "(Chưa có dữ liệu)",
@@ -109,8 +109,8 @@ CONSOLE_TEXT = {
     "title": "  MAZE PATHFINDING — KẾT QUẢ SO SÁNH",
     "header": f"{'Thuật toán':<12} {'Path Length':>12} {'Nodes Explored':>16} {'Time (ms)':>12}",
     "not_found_tag": "(Không tìm được)",
-    "fastest": "  ⚡ Nhanh nhất   : {algo}",
-    "shortest": "  📏 Đường ngắn  : {algo}",
+    "fastest": "Nhanh nhất   : {algo}",
+    "shortest": "Đường ngắn  : {algo}",
     "explanation_title": "  GIẢI THÍCH THUẬT TOÁN",
 }
 
