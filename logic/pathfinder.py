@@ -106,7 +106,8 @@ class PathFinder:
         def heuristic(a, b):
             return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-        frontier = [(heuristic(start, goal), 0, start)]
+        start_h = heuristic(start, goal)
+        frontier = [(start_h, start_h, 0, start)]
         came_from = {start: None}
         g_score = {start: 0}
         counter = 1
@@ -114,7 +115,7 @@ class PathFinder:
         explored = set()
 
         while frontier:
-            _, _, current = heapq.heappop(frontier)
+            _, _, _, current = heapq.heappop(frontier)
 
             if current in explored:
                 continue
@@ -134,8 +135,9 @@ class PathFinder:
                 if tentative_g < g_score.get(nb, float("inf")):
                     came_from[nb] = current
                     g_score[nb] = tentative_g
-                    f_new = tentative_g + heuristic(nb, goal)
-                    heapq.heappush(frontier, (f_new, counter, nb))
+                    h_new = heuristic(nb, goal)
+                    f_new = tentative_g + h_new
+                    heapq.heappush(frontier, (f_new, h_new, counter, nb))
                     counter += 1
 
         elapsed = time.perf_counter() - t_start
