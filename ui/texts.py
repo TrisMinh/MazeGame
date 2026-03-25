@@ -27,14 +27,14 @@ BUTTON_ICONS = {
 STATUS_MESSAGES = {
     "initial": "Chọn thuật toán và nhấn nút để bắt đầu!",
     "new_maze": "Maze mới! Chọn thuật toán để bắt đầu.",
-    "running": "🔍 {algo} đang tìm đường...",
-    "game_started": "🎮 Game mode: Dùng WASD hoặc phím mũi tên để đi từ S tới G.",
-    "game_blocked": "🎮 Game mode đang chạy. Hãy về đích hoặc nhấn [New Maze] để chơi lại.",
-    "game_win": "🏁 Victory! Steps={steps} | Path dung={correct_steps} | Shortest={shortest_steps} | Hieu qua={efficiency:.1f}%",
-    "compare_done": "✅ So sánh hoàn tất! Nhấn [Show Table] để xem bảng.",
-    "clear_paths": "✅ Đã xóa các đường chạy (paths).",
-    "algo_done": "✅ {algo} xong! Path={path_length} | Nodes={nodes_explored} | {time_ms:.3f}ms | [Show Table] để so sánh",
-    "algo_failed": "❌ {algo}: Không tìm được đường đi!",
+    "running": "{algo} đang tìm đường...",
+    "game_started": "Game mode: Dùng WASD hoặc phím mũi tên để đi từ S tới G.",
+    "game_blocked": "Game mode đang chạy. Hãy về đích hoặc nhấn [New Maze] để chơi lại.",
+    "game_win": "Victory! Steps={steps} | Path dung={correct_steps} | Shortest={shortest_steps} | Hieu qua={efficiency:.1f}%",
+    "compare_done": "So sánh hoàn tất! Nhấn [Show Table] để xem bảng.",
+    "clear_paths": "Đã xóa các đường chạy (paths).",
+    "algo_done": "{algo} xong! Path={path_length} | Nodes={nodes_explored} | {time_ms:.3f}ms | [Show Table] để so sánh",
+    "algo_failed": "{algo}: Không tìm được đường đi!",
 }
 
 BOTTOM_HINT = "[1] DFS  [2] BFS  [3] A*  [C] Compare All  [R] New Maze  [ESC] Đóng bảng"
@@ -51,13 +51,13 @@ LEGEND_ITEMS = [
 ]
 
 STATS_PANEL_TEXT = {
-    "title": "📊 Kết quả & Phân tích",
+    "title": "Kết quả & Phân tích",
     "empty_hint": "Chọn thuật toán và nhấn nút để chạy.",
-    "comparison_title": "🏆 So sánh",
-    "explanations_title": "💡 Giải thích thuật toán",
-    "fastest": "⚡ Nhanh nhất",
-    "shortest": "📏 Đường ngắn",
-    "efficient": "🧠 Ít node nhất",
+    "comparison_title": "So sánh",
+    "explanations_title": "Giải thích thuật toán",
+    "fastest": "Nhanh nhất",
+    "shortest": "Đường ngắn",
+    "efficient": "Ít node nhất",
     "path_length": "Path length",
     "nodes_explored": "Nodes explored",
     "time": "Time",
