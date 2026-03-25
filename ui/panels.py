@@ -6,6 +6,7 @@ from config import (
     SHOW_PANEL_EMPTY_HINT,
     SHOW_PANEL_EXPLANATIONS,
     SHOW_PANEL_TITLE,
+    SHOW_EXECUTION_TIME,
 )
 from ui.texts import ALGORITHM_ORDER, ALGO_EXPLANATIONS, COMPARE_TABLE_TEXT, STATS_PANEL_TEXT
 from ui.theme import ALGO_COLORS, C_PANEL_BG, C_PANEL_BORDER, C_TEXT_ACCENT, C_TEXT_PRIMARY, C_TEXT_SECONDARY
@@ -78,8 +79,9 @@ class StatsPanel:
                     else STATS_PANEL_TEXT["not_found"],
                 ),
                 (STATS_PANEL_TEXT["nodes_explored"], f"{stats['nodes_explored']}"),
-                (STATS_PANEL_TEXT["time"], f"{stats['time_ms']:.3f} ms"),
             ]
+            if SHOW_EXECUTION_TIME:
+                rows_data.append((STATS_PANEL_TEXT["time"], f"{stats['time_ms']:.3f} ms"))
 
             for label, val in rows_data:
                 lbl_surf = self.font_sm.render(f"  {label}:", True, C_TEXT_SECONDARY)
@@ -100,15 +102,16 @@ class StatsPanel:
 
             valid = {a: s for a, s in self.results.items() if s["path_length"] > 0}
             if valid:
-                fastest = min(valid, key=lambda a: valid[a]["time_ms"])
                 shortest = min(valid, key=lambda a: valid[a]["path_length"])
                 efficient = min(valid, key=lambda a: valid[a]["nodes_explored"])
 
                 lines = [
-                    (STATS_PANEL_TEXT["fastest"], fastest, ALGO_COLORS[fastest]["path"]),
                     (STATS_PANEL_TEXT["shortest"], shortest, ALGO_COLORS[shortest]["path"]),
                     (STATS_PANEL_TEXT["efficient"], efficient, ALGO_COLORS[efficient]["path"]),
                 ]
+                if SHOW_EXECUTION_TIME:
+                    fastest = min(valid, key=lambda a: valid[a]["time_ms"])
+                    lines.insert(0, (STATS_PANEL_TEXT["fastest"], fastest, ALGO_COLORS[fastest]["path"]))
 
                 for label, winner, col in lines:
                     lbl = self.font_sm.render(label + ":", True, C_TEXT_SECONDARY)
@@ -262,8 +265,12 @@ class CompareTable:
             surface.blit(msg, (px, py))
             return
 
-        col_widths = [70, 110, 130, 120]
-        headers = COMPARE_TABLE_TEXT["headers"]
+        if SHOW_EXECUTION_TIME:
+            col_widths = [70, 110, 130, 120]
+            headers = COMPARE_TABLE_TEXT["headers"]
+        else:
+            col_widths = [100, 140, 160]
+            headers = COMPARE_TABLE_TEXT["headers"][:3]
         row_h = 24
 
         cx = px
@@ -292,8 +299,9 @@ class CompareTable:
                 if s["path_length"]
                 else COMPARE_TABLE_TEXT["not_available"],
                 str(s["nodes_explored"]),
-                f"{s['time_ms']:.4f}",
             ]
+            if SHOW_EXECUTION_TIME:
+                cells.append(f"{s['time_ms']:.4f}")
 
             for i, cell in enumerate(cells):
                 cs = self.font_sm.render(cell, True, col if i == 0 else C_TEXT_PRIMARY)
@@ -310,10 +318,11 @@ class CompareTable:
             py += 8
 
             winners = [
-                (COMPARE_TABLE_TEXT["fastest"], min(valid, key=lambda a: valid[a]["time_ms"])),
                 (COMPARE_TABLE_TEXT["shortest"], min(valid, key=lambda a: valid[a]["path_length"])),
                 (COMPARE_TABLE_TEXT["efficient"], min(valid, key=lambda a: valid[a]["nodes_explored"])),
             ]
+            if SHOW_EXECUTION_TIME:
+                winners.insert(0, (COMPARE_TABLE_TEXT["fastest"], min(valid, key=lambda a: valid[a]["time_ms"])))
 
             wx = px
             for label, winner in winners:
@@ -357,7 +366,7 @@ class CompareTable:
 
         py = max(py_left, py + 100) + 6
 
-        if py < self.y + self.h - 60:
+        if py < self.y + self.h - 60 and SHOW_EXECUTION_TIME:
             time_vals = {a: s["time_ms"] for a, s in self.results.items()}
             self._draw_bar_section(
                 surface,
