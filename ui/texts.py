@@ -8,6 +8,7 @@ BUTTON_LABELS = {
     "A*": "Run A*",
     "PLAY": "Play Now",
     "COMPARE": "Compare All",
+    "CLEAR": "Clear Path",
     "RESET": "New Maze",
     "TABLE": "Show Table",
 }
@@ -18,6 +19,7 @@ BUTTON_ICONS = {
     "A*": "",
     "PLAY": "",
     "COMPARE": "",
+    "CLEAR": "",
     "RESET": "",
     "TABLE": "",
 }
@@ -30,6 +32,7 @@ STATUS_MESSAGES = {
     "game_blocked": "🎮 Game mode đang chạy. Hãy về đích hoặc nhấn [New Maze] để chơi lại.",
     "game_win": "🏁 Victory! Steps={steps} | Path dung={correct_steps} | Shortest={shortest_steps} | Hieu qua={efficiency:.1f}%",
     "compare_done": "✅ So sánh hoàn tất! Nhấn [Show Table] để xem bảng.",
+    "clear_paths": "✅ Đã xóa các đường chạy (paths).",
     "algo_done": "✅ {algo} xong! Path={path_length} | Nodes={nodes_explored} | {time_ms:.3f}ms | [Show Table] để so sánh",
     "algo_failed": "❌ {algo}: Không tìm được đường đi!",
 }

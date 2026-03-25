@@ -31,7 +31,7 @@ from ui.texts import (
     CONSOLE_TEXT,
     STATUS_MESSAGES,
 )
-from ui.theme import C_BG, C_BTN_ASTAR, C_BTN_BFS, C_BTN_COMPARE, C_BTN_DFS, C_BTN_PLAY, C_BTN_RESET, C_TEXT_SECONDARY
+from ui.theme import C_BG, C_BTN_ASTAR, C_BTN_BFS, C_BTN_COMPARE, C_BTN_DFS, C_BTN_PLAY, C_BTN_RESET, C_BTN_CLEAR, C_TEXT_SECONDARY
 from ui.widgets import Button
 
 
@@ -243,15 +243,22 @@ class MazeGame:
             self.font_md,
             BUTTON_ICONS["COMPARE"],
         )
+        self.btn_clear = Button(
+            pygame.Rect(bx + (bw + gap) * 5 + 20, by, bw, bh),
+            BUTTON_LABELS["CLEAR"],
+            C_BTN_CLEAR,
+            self.font_md,
+            BUTTON_ICONS["CLEAR"],
+        )
         self.btn_reset = Button(
-            pygame.Rect(bx + (bw + gap) * 5 + 20, by, bw + 8, bh),
+            pygame.Rect(bx + (bw + gap) * 6 + 20, by, bw + 8, bh),
             BUTTON_LABELS["RESET"],
             C_BTN_RESET,
             self.font_md,
             BUTTON_ICONS["RESET"],
         )
         self.btn_table = Button(
-            pygame.Rect(bx + (bw + gap) * 6 + 28, by, bw + 14, bh),
+            pygame.Rect(bx + (bw + gap) * 7 + 28, by, bw + 14, bh),
             BUTTON_LABELS["TABLE"],
             (60, 160, 180),
             self.font_md,
@@ -264,6 +271,7 @@ class MazeGame:
             self.btn_astar,
             self.btn_play,
             self.btn_compare,
+            self.btn_clear,
             self.btn_reset,
             self.btn_table,
         ]
@@ -418,6 +426,23 @@ class MazeGame:
             self._print_console_stats()
             self._stats_printed = True
 
+    def _clear_paths(self):
+        self.game_mode = False
+        self.player_pos = None
+        self.player_history = []
+        self.player_correct_path = []
+        self.last_hold_move_tick = 0
+        self.last_hold_dir = None
+        self.hold_repeat_started = False
+
+        self.anim.reset()
+        self.layers = {}
+        self.stats_panel.clear()
+        if hasattr(self, "compare_table"):
+            self.compare_table.hide()
+        self._stats_printed = False
+        self.status_msg = STATUS_MESSAGES["clear_paths"]
+
     def _print_console_stats(self):
         print("\n" + CONSOLE_TEXT["line"])
         print(CONSOLE_TEXT["title"])
@@ -507,6 +532,8 @@ class MazeGame:
                     self._start_player_game()
                 if self.btn_compare.handle_event(event):
                     self._run_compare()
+                if self.btn_clear.handle_event(event):
+                    self._clear_paths()
                 if self.btn_reset.handle_event(event):
                     self._new_maze()
                 if self.btn_table.handle_event(event):
