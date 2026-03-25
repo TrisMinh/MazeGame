@@ -4,14 +4,16 @@ from collections import deque
 
 
 class PathFinder:
-    DIRECTIONS = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+    DFS_DIRECTIONS = [(-1, 0), (0, -1), (1, 0), (0, 1)]
+    BFS_DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    ASTAR_DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
     @staticmethod
-    def _neighbors(grid, r, c):
+    def _neighbors(grid, r, c, directions):
         rows, cols = len(grid), len(grid[0])
         result = []
 
-        for dr, dc in PathFinder.DIRECTIONS:
+        for dr, dc in directions:
             nr, nc = r + dr, c + dc
             if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] == 1:
                 result.append((nr, nc))
@@ -51,7 +53,7 @@ class PathFinder:
             if current == goal:
                 break
 
-            for nb in PathFinder._neighbors(grid, *current):
+            for nb in PathFinder._neighbors(grid, *current, PathFinder.DFS_DIRECTIONS):
                 if nb not in explored:
                     frontier.append(nb)
                     if nb not in came_from:
@@ -83,7 +85,7 @@ class PathFinder:
             if current == goal:
                 break
 
-            for nb in PathFinder._neighbors(grid, *current):
+            for nb in PathFinder._neighbors(grid, *current, PathFinder.BFS_DIRECTIONS):
                 if nb not in came_from:
                     came_from[nb] = current
                     frontier.append(nb)
@@ -126,7 +128,7 @@ class PathFinder:
             if current == goal:
                 break
 
-            for nb in PathFinder._neighbors(grid, *current):
+            for nb in PathFinder._neighbors(grid, *current, PathFinder.ASTAR_DIRECTIONS):
                 if nb in explored:
                     continue
 
