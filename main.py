@@ -16,6 +16,7 @@ from config import (
     WINDOW_H,
     WINDOW_W,
 )
+from logic.gameplay_controller import GameplayController
 from logic.maze_generator import MazeGenerator
 from services.solver_service import SolverService
 from ui.animation import AnimationManager
@@ -55,15 +56,7 @@ class MazeGame:
         self.anim = AnimationManager()
         self.layers: dict[str, dict] = {}
         self._stats_printed = False
-        self.game_mode = False
-        self.player_pos: tuple[int, int] | None = None
-        self.player_history: list[tuple[int, int]] = []
-        self.player_correct_path: list[tuple[int, int]] = []
-        self.hold_initial_delay_ms = 160
-        self.hold_repeat_delay_ms = 70
-        self.last_hold_move_tick = 0
-        self.last_hold_dir: tuple[int, int] | None = None
-        self.hold_repeat_started = False
+        self.gameplay = GameplayController()
 
         panel_x = MAZE_X_OFFSET + COLS * CELL_SIZE + 20
         panel_y = MAZE_Y_OFFSET
@@ -188,13 +181,7 @@ class MazeGame:
         self._randomize_start_goal()
         self.anim.reset()
         self.layers = {}
-        self.game_mode = False
-        self.player_pos = None
-        self.player_history = []
-        self.player_correct_path = []
-        self.last_hold_move_tick = 0
-        self.last_hold_dir = None
-        self.hold_repeat_started = False
+        self.gameplay.reset()
         self._stats_printed = False
         self.stats_panel.clear()
         if hasattr(self, "compare_table"):
@@ -276,120 +263,29 @@ class MazeGame:
             self.btn_table,
         ]
 
-    @staticmethod
-    def _collapse_history_to_path(history: list[tuple[int, int]]) -> list[tuple[int, int]]:
-        path: list[tuple[int, int]] = []
-        index_of: dict[tuple[int, int], int] = {}
-
-        for node in history:
-            if node in index_of:
-                cut_at = index_of[node]
-                for old in path[cut_at + 1 :]:
-                    index_of.pop(old, None)
-                path = path[: cut_at + 1]
-            else:
-                index_of[node] = len(path)
-                path.append(node)
-
-        return path
-
     def _start_player_game(self):
         if self.anim.state not in ("idle", "done"):
             return
 
-        self.game_mode = True
         self.layers = {}
         self.anim.reset()
         self.stats_panel.clear()
-        self.player_pos = self.start
-        self.player_history = [self.start]
-        self.player_correct_path = []
-        self.last_hold_move_tick = pygame.time.get_ticks()
-        self.last_hold_dir = None
-        self.hold_repeat_started = False
+        self.status_msg = self.gameplay.start(self.start)
         if hasattr(self, "compare_table"):
             self.compare_table.hide()
-        self.status_msg = STATUS_MESSAGES["game_started"]
 
     def _handle_player_move(self, dr: int, dc: int):
-        if not self.game_mode or self.player_pos is None:
-            return
-
-        r, c = self.player_pos
-        nr, nc = r + dr, c + dc
-
-        if not (0 <= nr < ROWS and 0 <= nc < COLS):
-            return
-        if self.grid[nr][nc] != 1:
-            return
-
-        self.player_pos = (nr, nc)
-        self.player_history.append((nr, nc))
-
-        if self.player_pos == self.goal:
-            self._finish_player_game()
-
-    def _finish_player_game(self):
-        self.game_mode = False
-        self.last_hold_dir = None
-        self.hold_repeat_started = False
-        self.player_correct_path = self._collapse_history_to_path(self.player_history)
-
-        shortest = SolverService.run("BFS", self.grid, self.start, self.goal)["path"]
-        shortest_steps = max(0, len(shortest) - 1)
-        total_steps = max(0, len(self.player_history) - 1)
-        correct_steps = max(0, len(self.player_correct_path) - 1)
-        efficiency = 100.0
-        if correct_steps > 0 and shortest_steps > 0:
-            efficiency = min(100.0, (shortest_steps / correct_steps) * 100.0)
-
-        self.status_msg = STATUS_MESSAGES["game_win"].format(
-            steps=total_steps,
-            correct_steps=correct_steps,
-            shortest_steps=shortest_steps,
-            efficiency=efficiency,
-        )
-
-    def _current_move_direction(self) -> tuple[int, int] | None:
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            return (-1, 0)
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            return (1, 0)
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            return (0, -1)
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            return (0, 1)
-        return None
+        status_msg = self.gameplay.move(dr, dc, self.grid, self.goal)
+        if status_msg is not None:
+            self.status_msg = status_msg
 
     def _handle_held_player_movement(self):
-        if not self.game_mode:
-            return
-
-        direction = self._current_move_direction()
-        if direction is None:
-            self.last_hold_dir = None
-            self.hold_repeat_started = False
-            return
-
-        now = pygame.time.get_ticks()
-        if direction != self.last_hold_dir:
-            self.last_hold_dir = direction
-            self.last_hold_move_tick = now
-            self.hold_repeat_started = False
-            return
-
-        elapsed = now - self.last_hold_move_tick
-        delay = self.hold_repeat_delay_ms if self.hold_repeat_started else self.hold_initial_delay_ms
-        if elapsed < delay:
-            return
-
-        self.last_hold_move_tick = now
-        self.hold_repeat_started = True
-        self._handle_player_move(*direction)
+        status_msg = self.gameplay.handle_held_movement(self.grid, self.goal)
+        if status_msg is not None:
+            self.status_msg = status_msg
 
     def _run_algorithm(self, algo_name: str):
-        if self.game_mode:
+        if self.gameplay.game_mode:
             self.status_msg = STATUS_MESSAGES["game_blocked"]
             return
 
@@ -404,7 +300,7 @@ class MazeGame:
         self.status_msg = STATUS_MESSAGES["running"].format(algo=algo_name)
 
     def _run_compare(self):
-        if self.game_mode:
+        if self.gameplay.game_mode:
             self.status_msg = STATUS_MESSAGES["game_blocked"]
             return
 
@@ -427,14 +323,7 @@ class MazeGame:
             self._stats_printed = True
 
     def _clear_paths(self):
-        self.game_mode = False
-        self.player_pos = None
-        self.player_history = []
-        self.player_correct_path = []
-        self.last_hold_move_tick = 0
-        self.last_hold_dir = None
-        self.hold_repeat_started = False
-
+        self.gameplay.reset()
         self.anim.reset()
         self.layers = {}
         self.stats_panel.clear()
@@ -486,27 +375,23 @@ class MazeGame:
                     sys.exit()
 
                 if event.type == pygame.KEYDOWN:
-                    if self.game_mode:
+                    if self.gameplay.game_mode:
                         if event.key in (pygame.K_UP, pygame.K_w):
-                            self._handle_player_move(-1, 0)
-                            self.last_hold_dir = (-1, 0)
-                            self.last_hold_move_tick = pygame.time.get_ticks()
-                            self.hold_repeat_started = False
+                            status_msg = self.gameplay.on_keydown_move((-1, 0), self.grid, self.goal)
+                            if status_msg is not None:
+                                self.status_msg = status_msg
                         elif event.key in (pygame.K_DOWN, pygame.K_s):
-                            self._handle_player_move(1, 0)
-                            self.last_hold_dir = (1, 0)
-                            self.last_hold_move_tick = pygame.time.get_ticks()
-                            self.hold_repeat_started = False
+                            status_msg = self.gameplay.on_keydown_move((1, 0), self.grid, self.goal)
+                            if status_msg is not None:
+                                self.status_msg = status_msg
                         elif event.key in (pygame.K_LEFT, pygame.K_a):
-                            self._handle_player_move(0, -1)
-                            self.last_hold_dir = (0, -1)
-                            self.last_hold_move_tick = pygame.time.get_ticks()
-                            self.hold_repeat_started = False
+                            status_msg = self.gameplay.on_keydown_move((0, -1), self.grid, self.goal)
+                            if status_msg is not None:
+                                self.status_msg = status_msg
                         elif event.key in (pygame.K_RIGHT, pygame.K_d):
-                            self._handle_player_move(0, 1)
-                            self.last_hold_dir = (0, 1)
-                            self.last_hold_move_tick = pygame.time.get_ticks()
-                            self.hold_repeat_started = False
+                            status_msg = self.gameplay.on_keydown_move((0, 1), self.grid, self.goal)
+                            if status_msg is not None:
+                                self.status_msg = status_msg
 
                     if event.key == pygame.K_r:
                         self._new_maze()
@@ -566,7 +451,11 @@ class MazeGame:
 
             self.renderer.draw_maze(self.grid)
             self.renderer.draw_layers(self.layers, self.anim)
-            self.renderer.draw_player_run(self.player_pos, self.player_history, self.player_correct_path)
+            self.renderer.draw_player_run(
+                self.gameplay.player_pos,
+                self.gameplay.player_history,
+                self.gameplay.player_correct_path,
+            )
             self.renderer.draw_start_goal(self.start, self.goal)
             self.renderer.draw_legend()
             self.renderer.draw_status_bar(self.status_msg)
